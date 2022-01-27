@@ -14,12 +14,14 @@ public class MsscBreweryGatewayApplication {
     }
 
     @Bean
-    public RouteLocator myRoutes(RouteLocatorBuilder builder) {
+    public RouteLocator localHostRoutes(RouteLocatorBuilder builder) {
         return builder.routes()
-                .route(p -> p
-                        .path("/googlesearch2")
-                        .filters(f -> f.rewritePath("/googlesearch2(?<segment>/?.*)", "/${segment}"))
-                        .uri("https://google.com"))
+                .route(r -> r.path("/api/v1/beer*", "/api/v1/beer/*", "/api/v1/beerUpc/*")
+                        .uri("http://localhost:8080"))
+                .route(r -> r.path("/api/v1/customers/**")
+                        .uri("http://localhost:8081"))
+                .route(r -> r.path("/api/v1/beer/*/inventory")
+                        .uri("http://localhost:8082"))
                 .build();
     }
 }
