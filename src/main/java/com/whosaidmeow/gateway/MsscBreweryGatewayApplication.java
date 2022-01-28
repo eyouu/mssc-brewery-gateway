@@ -5,6 +5,7 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.cloud.gateway.route.RouteLocator;
 import org.springframework.cloud.gateway.route.builder.RouteLocatorBuilder;
 import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Profile;
 
 @SpringBootApplication
 public class MsscBreweryGatewayApplication {
@@ -13,7 +14,8 @@ public class MsscBreweryGatewayApplication {
         SpringApplication.run(MsscBreweryGatewayApplication.class, args);
     }
 
-    @Bean
+    @Profile("!local-discovery")
+    @Bean // routes for gateway
     public RouteLocator localHostRoutes(RouteLocatorBuilder builder) {
         return builder.routes()
                 .route(r -> r.path("/api/v1/beer*", "/api/v1/beer/*", "/api/v1/beerUpc/*")
@@ -22,6 +24,19 @@ public class MsscBreweryGatewayApplication {
                         .uri("http://localhost:8081"))
                 .route(r -> r.path("/api/v1/beer/*/inventory")
                         .uri("http://localhost:8082"))
+                .build();
+    }
+
+    @Profile("local-discovery")
+    @Bean // routes for gateway
+    public RouteLocator localBalancedRoutes(RouteLocatorBuilder builder) {
+        return builder.routes()
+                .route(r -> r.path("/api/v1/beer*", "/api/v1/beer/*", "/api/v1/beerUpc/*")
+                        .uri("lb://beer-service")) // lb - load balancer. beer-service -> name of service.
+                .route(r -> r.path("/api/v1/customers/**")
+                        .uri("lb://beer-order-service"))
+                .route(r -> r.path("/api/v1/beer/*/inventory")
+                        .uri("lb://beer-inventory-service"))
                 .build();
     }
 }
